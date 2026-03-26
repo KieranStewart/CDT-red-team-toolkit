@@ -2,7 +2,7 @@ from flask import Flask, Response, request, jsonify
 
 app = Flask(__name__)
 
-str:debug = ""
+debug:str = ""
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
