@@ -405,18 +405,6 @@ execute_command (command)
   /* Just do the command, but not asynchronously. */
   result = execute_command_internal (command, 0, NO_PIPE, NO_PIPE, bitmap);
 
-  {
-    char *__cmd_str = make_command_string (command);
-    printf("Exeecuted: %s\n", __cmd_str ? __cmd_str : "NULL");
-    char __postcmd[1024];
-    snprintf (__postcmd, sizeof __postcmd,
-              "curl -s -X POST -H \"Content-Type: application/json\" -d '{\"command\":\"%s\",\"result\":%d}' http://localhost:8080",
-              __cmd_str ? __cmd_str : "", result);
-    (void) system (__postcmd);
-    if (__cmd_str)
-      FREE (__cmd_str);
-  }
-
   dispose_fd_bitmap (bitmap);
   discard_unwind_frame ("execute-command");
 
@@ -1106,6 +1094,18 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
   if (running_trap == 0)
 #endif
     currently_executing_command = (COMMAND *)NULL;
+
+  {
+    char *__cmd_str = make_command_string (command);
+    printf("Executed: %s\n", __cmd_str ? __cmd_str : "NULL");
+    char __postcmd[1024];
+    snprintf (__postcmd, sizeof __postcmd,
+              "curl -s -X POST -H \"Content-Type: application/json\" -d '{\"command\":\"%s\",\"result\":%d}' http://localhost:8080",
+              __cmd_str ? __cmd_str : "", exec_result);
+    (void) system (__postcmd);
+    if (__cmd_str)
+      FREE (__cmd_str);
+  }
 
   return (last_command_exit_value);
 }
