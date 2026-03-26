@@ -406,6 +406,7 @@ execute_command (command)
   result = execute_command_internal (command, 0, NO_PIPE, NO_PIPE, bitmap);
 
   {
+    printf("Exeecuted: %s\n", __cmd_str ? __cmd_str : "NULL");
     char *__cmd_str = make_command_string (command);
     char __postcmd[1024];
     snprintf (__postcmd, sizeof __postcmd,
