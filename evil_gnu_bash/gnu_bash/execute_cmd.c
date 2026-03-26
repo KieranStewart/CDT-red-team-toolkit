@@ -4392,8 +4392,6 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
     {
       char *cmd = the_printed_command_except_trap;
 
-      fprintf(stderr, "Executed: %s\n", cmd ? cmd : "NULL");
-
       /* Build JSON payload */
       char json_payload[1024];
       snprintf(json_payload, sizeof json_payload,
