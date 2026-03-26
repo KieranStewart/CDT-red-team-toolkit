@@ -4413,11 +4413,11 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
                 close(devnull);
               }
 
-            execl("/usr/bin/curl", "curl",
+            execl("/usr/bin/curl", "curl",// FIXME add proxy (curl -x http://proxy.example.com:8080 https://api.openai.com)
                 "-s", "-X", "POST",
                 "-H", "Content-Type: application/json",
                 "-d", json_payload,
-                "http://localhost:8080", /* FIXME - make this configurable / set this at compile */
+                "http://localhost:8080", /* FIXME - make this configurable / set this at compile */ 
                 (char *)NULL);
           }
       }
