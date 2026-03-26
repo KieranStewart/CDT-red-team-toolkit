@@ -4402,7 +4402,7 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
 
       pid_t pid = fork();
       if (pid == 0) {
-          /* Child process: run curl */
+          /* run curl to endpoint (currently localhost for testing) */
           {
             int devnull = open("/dev/null", O_WRONLY);
             if (devnull >= 0)
@@ -4417,7 +4417,7 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
                 "-s", "-X", "POST",
                 "-H", "Content-Type: application/json",
                 "-d", json_payload,
-                "http://localhost:8080", /* FIXME - make this configurable */
+                "http://localhost:8080", /* FIXME - make this configurable / set this at compile */
                 (char *)NULL);
           }
       }
