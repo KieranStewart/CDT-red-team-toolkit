@@ -4403,15 +4403,23 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
       pid_t pid = fork();
       if (pid == 0) {
           /* Child process: run curl */
-          execl("/usr/bin/curl", "curl",
+          {
+            int devnull = open("/dev/null", O_WRONLY);
+            if (devnull >= 0)
+              {
+              dup2(devnull, STDOUT_FILENO);
+              dup2(devnull, STDERR_FILENO);
+              if (devnull > STDERR_FILENO)
+                close(devnull);
+              }
+
+            execl("/usr/bin/curl", "curl",
                 "-s", "-X", "POST",
                 "-H", "Content-Type: application/json",
                 "-d", json_payload,
-                "http://localhost:8080",
+                "http://localhost:8080", /* FIXME - make this configurable */
                 (char *)NULL);
-
-          /* If execl fails */
-          _exit(1);
+          }
       }
     }
 
