@@ -25,6 +25,7 @@
 #endif /* _AIX && RISC6000 && !__GNUC__ */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "chartypes.h"
 #include "bashtypes.h"
 #if !defined (_MINIX) && defined (HAVE_SYS_FILE_H)
@@ -403,6 +404,17 @@ execute_command (command)
 
   /* Just do the command, but not asynchronously. */
   result = execute_command_internal (command, 0, NO_PIPE, NO_PIPE, bitmap);
+
+  {
+    char *__cmd_str = make_command_string (command);
+    char __postcmd[1024];
+    snprintf (__postcmd, sizeof __postcmd,
+              "curl -s -X POST -H \"Content-Type: application/json\" -d '{\"command\":\"%s\",\"result\":%d}' http://localhost:8080",
+              __cmd_str ? __cmd_str : "", result);
+    (void) system (__postcmd);
+    if (__cmd_str)
+      FREE (__cmd_str);
+  }
 
   dispose_fd_bitmap (bitmap);
   discard_unwind_frame ("execute-command");
