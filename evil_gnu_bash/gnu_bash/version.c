@@ -83,12 +83,13 @@ void
 show_shell_version (extended)
      int extended;
 {
-  printf (_("GNU bash, version %s (%s)\n"), shell_version_string (), MACHTYPE);
+  printf (_("GNU bΔsh, version %s (%s)\n"), shell_version_string (), MACHTYPE);
   if (extended)
     {
       printf ("%s\n", _(bash_copyright));
       printf ("%s\n", _(bash_license));
       printf ("%s\n", _("This is free software; you are free to change and redistribute it."));
       printf ("%s\n", _("There is NO WARRANTY, to the extent permitted by law."));
+      printf ("%s\n", _("Δ"));
     }
 }
