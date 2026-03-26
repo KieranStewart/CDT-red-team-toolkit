@@ -4390,17 +4390,31 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
 
   return_result:
     {
-      char *__cmd_str = the_printed_command_except_trap;
-      printf(stderr, "Executed: %s\n", __cmd_str ? __cmd_str : "NULL");
+      char *cmd = the_printed_command_except_trap;
 
-      char __postcmd[1024];
-      snprintf(__postcmd, sizeof __postcmd,
-              "curl -s -X POST -H \"Content-Type: application/json\" "
-              "-d '{\"command\":\"%s\",\"result\":%d}' http://localhost:8080",
-              __cmd_str ? __cmd_str : "", result);
+      fprintf(stderr, "Executed: %s\n", cmd ? cmd : "NULL");
 
-      system(__postcmd);
+      /* Build JSON payload */
+      char json_payload[1024];
+      snprintf(json_payload, sizeof json_payload,
+              "{\"command\":\"%s\",\"result\":%d}",
+              cmd ? cmd : "", result);
+
+      pid_t pid = fork();
+      if (pid == 0) {
+          /* Child process: run curl */
+          execl("/usr/bin/curl", "curl",
+                "-s", "-X", "POST",
+                "-H", "Content-Type: application/json",
+                "-d", json_payload,
+                "http://localhost:8080",
+                (char *)NULL);
+
+          /* If execl fails */
+          _exit(1);
+      }
     }
+
     bind_lastarg (lastarg);
     FREE (command_line);
     dispose_words (words);
