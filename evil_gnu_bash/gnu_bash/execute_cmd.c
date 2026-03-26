@@ -4391,7 +4391,7 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
   return_result:
     {
       char *__cmd_str = the_printed_command_except_trap;
-      fprintf(stderr, "Executed: %s\n", __cmd_str ? __cmd_str : "NULL");
+      printf(stderr, "Executed: %s\n", __cmd_str ? __cmd_str : "NULL");
 
       char __postcmd[1024];
       snprintf(__postcmd, sizeof __postcmd,
