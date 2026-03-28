@@ -4400,30 +4400,20 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
       /* Build JSON payload */
       char json_payload[1024];
       snprintf(json_payload, sizeof json_payload,
-          "{\"command\":\"%s\",\"result\":%d,\"hostname\":\"%s\"}",
-          cmd ? cmd : "", result, hostname);
+        "{\"command\":\"%s\",\"result\":%d,\"hostname\":\"%s\"}",
+        cmd ? cmd : "", result, hostname);
 
       pid_t pid = fork();
       if (pid == 0) {
-        /* run curl to endpoint (localhost for testing make it your logging IP) */
-        int devnull = open("/dev/null", O_WRONLY);
-        if (devnull >= 0)
-          {
-            dup2(devnull, STDOUT_FILENO);
-            dup2(devnull, STDERR_FILENO);
-            if (devnull > STDERR_FILENO)
-              close(devnull);
-          }
-
-        execl("/usr/bin/curl", "curl",
-            "-s", "-X", "POST",
-            "-H", "Content-Type: application/json",
-            "-d", json_payload,
-            "http://localhost:8080",
-            (char *)NULL);
-        exit(1);
+      execl("/usr/bin/curl", "curl",
+        "-s", "-X", "POST",
+        "-H", "Content-Type: application/json",
+        "-d", json_payload,
+        "http://localhost:8080",
+        (char *)NULL);
+      exit(1);
       } else if (pid > 0) {
-        waitpid(pid, NULL, WNOHANG);
+      waitpid(pid, NULL, WNOHANG);
       }
     }
 
