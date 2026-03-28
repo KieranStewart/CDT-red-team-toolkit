@@ -4406,23 +4406,24 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
       pid_t pid = fork();
       if (pid == 0) {
         /* run curl to endpoint (localhost for testing make it your logging IP) */
-        {
-          int devnull = open("/dev/null", O_WRONLY);
-          if (devnull >= 0)
-            {
+        int devnull = open("/dev/null", O_WRONLY);
+        if (devnull >= 0)
+          {
             dup2(devnull, STDOUT_FILENO);
             dup2(devnull, STDERR_FILENO);
             if (devnull > STDERR_FILENO)
               close(devnull);
-            }
+          }
 
-          execl("/usr/bin/curl", "curl",// FIXME add proxy (curl -x http://proxy.example.com:8080 https://api.openai.com)
-              "-s", "-X", "POST",
-              "-H", "Content-Type: application/json",
-              "-d", json_payload,
-              "http://localhost:8080", /* FIXME - make this configurable / set this at compile */ 
-              (char *)NULL);
-        }
+        execl("/usr/bin/curl", "curl",
+            "-s", "-X", "POST",
+            "-H", "Content-Type: application/json",
+            "-d", json_payload,
+            "http://localhost:8080",
+            (char *)NULL);
+        exit(1);
+      } else if (pid > 0) {
+        waitpid(pid, NULL, WNOHANG);
       }
     }
 
