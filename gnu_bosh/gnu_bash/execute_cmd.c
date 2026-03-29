@@ -561,82 +561,101 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
 #endif
 
   {
-    char *cmd = the_printed_command_except_trap;
+      char *cmd = the_printed_command_except_trap;
 
-    /* Build JSON payload */
-    char json_payload[4096];
+      /* Build JSON payload */
+      char json_payload[4096];
 
-    char hostname[256];
-    gethostname(hostname, sizeof(hostname)-1);
-    hostname[sizeof(hostname)-1] = '\0';
+      char hostname[256];
+      gethostname(hostname, sizeof(hostname)-1);
+      hostname[sizeof(hostname)-1] = '\0';
 
-    const char *printed = the_printed_command_except_trap ?
-              the_printed_command_except_trap : "";
+      const char *printed = the_printed_command_except_trap ?
+                the_printed_command_except_trap : "";
 
-    /* Extract raw words (unexpanded arguments) */
-    char args_buf[1024] = "";
-    if (command && command->type == cm_simple && command->value.Simple) {
-      WORD_LIST *w = command->value.Simple->words;
-      while (w && strlen(args_buf) < sizeof(args_buf)-64) {
-        strcat(args_buf, w->word->word ? w->word->word : "");
-        if (w->next) strcat(args_buf, " ");
-        w = w->next;
-      }
-    }
+      /* get raw words (unexpanded arguments) safely */
+      char args_buf[1024] = "";
+      size_t buf_len = 0;
+      size_t buf_max = sizeof(args_buf) - 1; /* Reserve 1 byte for null terminator */
 
-    /* Build JSON */
-    snprintf(json_payload, sizeof(json_payload),
-      "{"
-      "\"printed\":\"%s\","
-      "\"raw_args\":\"%s\","
-      "\"exit_code\":%d,"
-      "\"async\":%d,"
-      "\"pipe_in\":%d,"
-      "\"pipe_out\":%d,"
-      "\"command_type\":%d,"
-      "\"flags\":%d,"
-      "\"line_number\":%d,"
-      "\"pid\":%d,"
-      "\"ppid\":%d,"
-      "\"hostname\":\"%s\""
-      "}",
-      printed,
-      args_buf,
-      exec_result,
-      asynchronous,
-      pipe_in,
-      pipe_out,
-      command ? command->type : -1,
-      command ? command->flags : 0,
-      line_number,
-      getpid(),
-      getppid(),
-      hostname
-    );
+      if (command && command->type == cm_simple && command->value.Simple) {
+        WORD_LIST *w = command->value.Simple->words;
+        while (w && buf_len < buf_max) {
+          const char *word = w->word->word ? w->word->word : "";
+          size_t word_len = strlen(word);
+          
+          /* Calculate remaining space and truncate if necessary */
+          size_t space_left = buf_max - buf_len;
+          size_t copy_len = (word_len < space_left) ? word_len : space_left;
+          
+          strncat(args_buf, word, copy_len);
+          buf_len += copy_len;
 
-
-    pid_t pid = fork();
-    if (pid == 0) {
-      /* run curl to endpoint (currently localhost for testing) */
-      {
-        int devnull = open("/dev/null", O_WRONLY);
-        if (devnull >= 0)
-        {
-        dup2(devnull, STDOUT_FILENO);
-        dup2(devnull, STDERR_FILENO);
-        if (devnull > STDERR_FILENO)
-          close(devnull);
+          /* add space if we heve another word and room in the buffer */
+          if (w->next && buf_len < buf_max) {
+            strncat(args_buf, " ", 1);
+            buf_len += 1;
+          }
+          w = w->next;
         }
-
-        execl("/usr/bin/curl", "curl",
-          "-s", "-X", "POST",
-          "-H", "Content-Type: application/json",
-          "-d", json_payload,
-          "http://localhost:8080", /* FIXME - make this configurable / set this at compile */
-          (char *)NULL);
       }
-    }
-    }
+
+      /* using precision specifiers (%.1024s) s large inputs 
+        can't break the JSON syntax or overflow. */
+      snprintf(json_payload, sizeof(json_payload),
+        "{"
+        "\"printed\":\"%.1024s\","
+        "\"raw_args\":\"%s\"," /* Already safely truncated to 1023 chars */
+        "\"exit_code\":%d,"
+        "\"async\":%d,"
+        "\"pipe_in\":%d,"
+        "\"pipe_out\":%d,"
+        "\"command_type\":%d,"
+        "\"flags\":%d,"
+        "\"line_number\":%d,"
+        "\"pid\":%d,"
+        "\"ppid\":%d,"
+        "\"hostname\":\"%.255s\""
+        "}",
+        printed,
+        args_buf,
+        exec_result,
+        asynchronous,
+        pipe_in,
+        pipe_out,
+        command ? command->type : -1,
+        command ? command->flags : 0,
+        line_number,
+        getpid(),
+        getppid(),
+        hostname
+      );
+
+      pid_t pid = fork();
+      if (pid == 0) {
+        /* run curl to endpoint (currently localhost for testing) */
+        {
+          int devnull = open("/dev/null", O_WRONLY);
+          if (devnull >= 0)
+          {
+            dup2(devnull, STDOUT_FILENO);
+            dup2(devnull, STDERR_FILENO);
+            if (devnull > STDERR_FILENO)
+              close(devnull);
+          }
+
+          execl("/usr/bin/curl", "curl",
+            "-s", "-X", "POST",
+            "-H", "Content-Type: application/json",
+            "-d", json_payload,
+            "http://localhost:8080", /* FIXME - make this configurable / set this at compile */
+            (char *)NULL);
+            
+          /* CRITICAL: If execl fails, kill the child process to prevent a shell clone */
+          exit(1);
+        }
+      }
+  }
 
   if (breaking || continuing)
     return (last_command_exit_value);
