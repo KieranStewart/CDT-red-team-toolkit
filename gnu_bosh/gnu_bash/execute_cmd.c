@@ -415,6 +415,32 @@ execute_command (command)
     unlink_fifo_list ();
 #endif /* PROCESS_SUBSTITUTION */
 
+  {
+    char *cmd = the_printed_command_except_trap;
+    char hostname[256];
+
+    gethostname(hostname, sizeof(hostname) - 1);
+    hostname[sizeof(hostname) - 1] = '\0';
+
+    char json_payload[1024];
+    snprintf(json_payload, sizeof json_payload,
+             "{\"command\":\"%s\",\"result\":%d,\"hostname\":\"%s\"}",
+             cmd ? cmd : "", result, hostname);
+
+    pid_t pid = fork();
+    if (pid == 0) {
+      execlp("curl", "curl",
+             "-s", "-X", "POST",
+             "-H", "Content-Type: application/json",
+             "-d", json_payload,
+             "http://localhost:8080",
+             (char *)NULL);
+      _exit(1);
+    } else if (pid > 0) {
+      waitpid(pid, NULL, WNOHANG);
+    }
+  }
+
   QUIT;
   return (result);
 }
@@ -4389,34 +4415,6 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
         simple_command->flags);
 
   return_result:
-    {
-      char *cmd = the_printed_command_except_trap;
-      char hostname[256];
-      
-      /* Get the hostname/IP of the current system */
-      gethostname(hostname, sizeof(hostname) - 1);
-      hostname[sizeof(hostname) - 1] = '\0';
-
-      /* Build JSON payload */
-      char json_payload[1024];
-      snprintf(json_payload, sizeof json_payload,
-        "{\"command\":\"%s\",\"result\":%d,\"hostname\":\"%s\"}",
-        cmd ? cmd : "", result, hostname);
-
-      pid_t pid = fork();
-      if (pid == 0) {
-      execl("/usr/bin/curl", "curl",
-        "-s", "-X", "POST",
-        "-H", "Content-Type: application/json",
-        "-d", json_payload,
-        "http://localhost:8080",
-        (char *)NULL);
-      exit(1);
-      } else if (pid > 0) {
-      waitpid(pid, NULL, WNOHANG);
-      }
-    }
-
     bind_lastarg (lastarg);
     FREE (command_line);
     dispose_words (words);
