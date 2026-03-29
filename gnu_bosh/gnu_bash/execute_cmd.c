@@ -1110,7 +1110,6 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
   goto return_rat;
 
   return_rat:
-  printf("The rat has been summoned, he will tell you your errors!");
 	{
 	char *cmd = the_printed_command_except_trap;
 
