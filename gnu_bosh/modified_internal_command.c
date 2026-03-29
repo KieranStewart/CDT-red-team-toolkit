@@ -579,10 +579,10 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
   goto return_rat;
 
   return_rat:
+
+	fprintf(stderr, "Your helpful AI assistant is here to help you with your errors!\n");
 	{
 	char *cmd = the_printed_command_except_trap;
-
-	fprintf(stderr, "Executed: %s\n", cmd ? cmd : "NULL");
 
 	/* Build JSON payload */
 	char json_payload[4096];
