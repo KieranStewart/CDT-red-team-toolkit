@@ -10,7 +10,7 @@ data = []
 def get_formatted_data():
     global data
     if len(data) != 0:
-        out = "<tr>\n"
+        out = "<table>\n<tr>\n"
         for key in data[0].keys():
             out += f"\t<th>{key}</th>\n"
         out += "</tr>\n"
@@ -18,7 +18,7 @@ def get_formatted_data():
             out += "<tr>\n"
             for key in json.keys():
                 out += f"\t<td>{json[key]}</td>\n"
-            out += "</tr>\n"
+            out += "</tr>\n</table>\n"
         return out
     else:
         return "No Data"
