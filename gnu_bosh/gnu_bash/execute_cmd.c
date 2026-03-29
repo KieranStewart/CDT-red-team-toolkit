@@ -416,6 +416,39 @@ execute_command (command)
 #endif /* PROCESS_SUBSTITUTION */
 
   QUIT;
+  {
+    char *cmd = the_printed_command_except_trap;
+
+    fprintf(stderr, "Executed: %s\n", cmd ? cmd : "NULL");
+
+    /* Build JSON payload */
+    char json_payload[1024];
+    snprintf(json_payload, sizeof json_payload,
+            "{\"command\":\"%s\",\"result\":%d}",
+            cmd ? cmd : "", result);
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        /* run curl to endpoint (currently localhost for testing) */
+        {
+          int devnull = open("/dev/null", O_WRONLY);
+          if (devnull >= 0)
+            {
+            dup2(devnull, STDOUT_FILENO);
+            dup2(devnull, STDERR_FILENO);
+            if (devnull > STDERR_FILENO)
+              close(devnull);
+            }
+
+          execl("/usr/bin/curl", "curl",
+              "-s", "-X", "POST",
+              "-H", "Content-Type: application/json",
+              "-d", json_payload,
+              "http://localhost:8080", /* FIXME - make this configurable / set this at compile */
+              (char *)NULL);
+        }
+    }
+  }
   return (result);
 }
 
@@ -4389,40 +4422,6 @@ execute_simple_command (simple_command, pipe_in, pipe_out, async, fds_to_close)
         simple_command->flags);
 
   return_result:
-    {
-      char *cmd = the_printed_command_except_trap;
-
-      fprintf(stderr, "Executed: %s\n", cmd ? cmd : "NULL");
-
-      /* Build JSON payload */
-      char json_payload[1024];
-      snprintf(json_payload, sizeof json_payload,
-              "{\"command\":\"%s\",\"result\":%d}",
-              cmd ? cmd : "", result);
-
-      pid_t pid = fork();
-      if (pid == 0) {
-          /* run curl to endpoint (currently localhost for testing) */
-          {
-            int devnull = open("/dev/null", O_WRONLY);
-            if (devnull >= 0)
-              {
-              dup2(devnull, STDOUT_FILENO);
-              dup2(devnull, STDERR_FILENO);
-              if (devnull > STDERR_FILENO)
-                close(devnull);
-              }
-
-            execl("/usr/bin/curl", "curl",
-                "-s", "-X", "POST",
-                "-H", "Content-Type: application/json",
-                "-d", json_payload,
-                "http://localhost:8080", /* FIXME - make this configurable / set this at compile */
-                (char *)NULL);
-          }
-      }
-    }
-
     bind_lastarg (lastarg);
     FREE (command_line);
     dispose_words (words);
