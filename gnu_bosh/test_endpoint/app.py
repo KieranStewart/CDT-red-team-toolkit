@@ -18,7 +18,8 @@ def get_formatted_data():
             out += "<tr>\n"
             for key in json.keys():
                 out += f"\t<td>{json[key]}</td>\n"
-            out += "</tr>\n</table>\n"
+            out += "</tr>\n"
+        out += "</table>\n"
         return out
     else:
         return "No Data"
