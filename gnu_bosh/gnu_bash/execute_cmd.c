@@ -644,7 +644,7 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
               close(devnull);
           }
 
-          println(json_payload);
+          printf(json_payload);
 
           execl("/usr/bin/curl", "curl",
             "-s", "-X", "POST",
