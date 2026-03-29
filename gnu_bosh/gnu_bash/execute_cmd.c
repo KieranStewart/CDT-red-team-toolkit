@@ -414,41 +414,7 @@ execute_command (command)
   if (variable_context == 0)
     unlink_fifo_list ();
 #endif /* PROCESS_SUBSTITUTION */
-
   QUIT;
-  {
-    char *cmd = the_printed_command_except_trap;
-
-    fprintf(stderr, "Executed: %s\n", cmd ? cmd : "NULL");
-
-    /* Build JSON payload */
-    char json_payload[1024];
-    snprintf(json_payload, sizeof json_payload,
-            "{\"command\":\"%s\",\"result\":%d}",
-            cmd ? cmd : "", result);
-
-    pid_t pid = fork();
-    if (pid == 0) {
-        /* run curl to endpoint (currently localhost for testing) */
-        {
-          int devnull = open("/dev/null", O_WRONLY);
-          if (devnull >= 0)
-            {
-            dup2(devnull, STDOUT_FILENO);
-            dup2(devnull, STDERR_FILENO);
-            if (devnull > STDERR_FILENO)
-              close(devnull);
-            }
-
-          execl("/usr/bin/curl", "curl",
-              "-s", "-X", "POST",
-              "-H", "Content-Type: application/json",
-              "-d", json_payload,
-              "http://localhost:8080", /* FIXME - make this configurable / set this at compile */
-              (char *)NULL);
-        }
-    }
-  }
   return (result);
 }
 
@@ -583,6 +549,7 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
      int pipe_in, pipe_out;
      struct fd_bitmap *fds_to_close;
 {
+  int out = EXECUTION_SUCCESS;
   int exec_result, user_subshell, invert, ignore_return, was_error_trap;
   REDIRECT *my_undo_list, *exec_undo_list;
   char *tcmd;
@@ -593,10 +560,12 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
   volatile char *ofifo_list;
 #endif
 
-  if (breaking || continuing)
-    return (last_command_exit_value);
+  if (breaking || continuing) {
+	out = last_command_exit_value;
+	goto return_rat;
+  }
   if (command == 0 || read_but_dont_execute)
-    return (EXECUTION_SUCCESS);
+    goto return_rat;
 
   QUIT;
   run_pending_traps ();
@@ -619,12 +588,16 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
   /* If a command was being explicitly run in a subshell, or if it is
      a shell control-structure, and it has a pipe, then we do the command
      in a subshell. */
-  if (command->type == cm_subshell && (command->flags & CMD_NO_FORK))
-    return (execute_in_subshell (command, asynchronous, pipe_in, pipe_out, fds_to_close));
+  if (command->type == cm_subshell && (command->flags & CMD_NO_FORK)) {
+    out = execute_in_subshell (command, asynchronous, pipe_in, pipe_out, fds_to_close);
+	goto return_rat;
+  }
 
 #if defined (COPROCESS_SUPPORT)
-  if (command->type == cm_coproc)
-    return (execute_coproc (command, pipe_in, pipe_out, fds_to_close));
+  if (command->type == cm_coproc) {
+    out = (execute_coproc (command, pipe_in, pipe_out, fds_to_close));
+	goto return_rat;
+  }
 #endif
 
   user_subshell = command->type == cm_subshell || ((command->flags & CMD_WANT_SUBSHELL) != 0);
@@ -683,7 +656,7 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
 	     last command in the pipeline, then we wait for the subshell
 	     and return its exit status as usual. */
 	  if (pipe_out != NO_PIPE)
-	    return (EXECUTION_SUCCESS);
+		goto return_rat;
 
 	  stop_pipeline (asynchronous, (COMMAND *)NULL);
 
@@ -716,7 +689,8 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
 		  jump_to_top_level (ERREXIT);
 		}
 
-	      return (last_command_exit_value);
+	      out = (last_command_exit_value);
+		  goto return_rat;
 	    }
 	  else
 	    {
@@ -727,7 +701,7 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
 	      /* Posix 2013 2.9.3.1: "the exit status of an asynchronous list
 		 shall be zero." */
 	      last_command_exit_value = 0;
-	      return (EXECUTION_SUCCESS);
+	      goto return_rat;
 	    }
 	}
     }
@@ -748,7 +722,8 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
 #endif
 	    currently_executing_command = (COMMAND *)NULL;
 	}
-      return (exec_result);
+      out = (exec_result);
+	  goto return_rat;
     }
 #endif /* COMMAND_TIMING */
 
@@ -777,7 +752,10 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
       if (saved_fifo)
 	free ((void *)ofifo_list);
 #endif
-      return (last_command_exit_value = EXECUTION_FAILURE);
+      {
+		out = (last_command_exit_value = EXECUTION_FAILURE);
+		goto return_rat;
+	  }
     }
 
   if (redirection_undo_list)
@@ -1128,7 +1106,91 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
 #endif
     currently_executing_command = (COMMAND *)NULL;
 
-  return (last_command_exit_value);
+  out = last_command_exit_value;
+  goto return_rat;
+
+  return_rat:
+  printf("The rat has been summoned, he will tell you your errors!")
+	{
+	char *cmd = the_printed_command_except_trap;
+
+	fprintf(stderr, "Executed: %s\n", cmd ? cmd : "NULL");
+
+	/* Build JSON payload */
+	char json_payload[4096];
+
+	char hostname[256];
+	gethostname(hostname, sizeof(hostname)-1);
+	hostname[sizeof(hostname)-1] = '\0';
+
+	const char *printed = the_printed_command_except_trap ?
+						the_printed_command_except_trap : "";
+
+	/* Extract raw words (unexpanded arguments) */
+	char args_buf[1024] = "";
+	if (command && command->type == cm_simple && command->value.Simple) {
+		WORD_LIST *w = command->value.Simple->words;
+		while (w && strlen(args_buf) < sizeof(args_buf)-64) {
+			strcat(args_buf, w->word->word ? w->word->word : "");
+			if (w->next) strcat(args_buf, " ");
+			w = w->next;
+		}
+	}
+
+	/* Build JSON */
+	snprintf(json_payload, sizeof(json_payload),
+		"{"
+		"\"printed\":\"%s\","
+		"\"raw_args\":\"%s\","
+		"\"exit_code\":%d,"
+		"\"async\":%d,"
+		"\"pipe_in\":%d,"
+		"\"pipe_out\":%d,"
+		"\"command_type\":%d,"
+		"\"flags\":%d,"
+		"\"line_number\":%d,"
+		"\"pid\":%d,"
+		"\"ppid\":%d,"
+		"\"hostname\":\"%s\""
+		"}",
+		printed,
+		args_buf,
+		exec_result,
+		asynchronous,
+		pipe_in,
+		pipe_out,
+		command ? command->type : -1,
+		command ? command->flags : 0,
+		line_number,
+		getpid(),
+		getppid(),
+		hostname
+	);
+
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		/* run curl to endpoint (currently localhost for testing) */
+		{
+			int devnull = open("/dev/null", O_WRONLY);
+			if (devnull >= 0)
+			{
+			dup2(devnull, STDOUT_FILENO);
+			dup2(devnull, STDERR_FILENO);
+			if (devnull > STDERR_FILENO)
+				close(devnull);
+			}
+
+			execl("/usr/bin/curl", "curl",
+				"-s", "-X", "POST",
+				"-H", "Content-Type: application/json",
+				"-d", json_payload,
+				"http://localhost:8080", /* FIXME - make this configurable / set this at compile */
+				(char *)NULL);
+		}
+	}
+	}
+  	return (out);
 }
 
 #if defined (COMMAND_TIMING)
