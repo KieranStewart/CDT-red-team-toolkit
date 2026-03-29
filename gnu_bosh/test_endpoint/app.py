@@ -34,7 +34,35 @@ def add_data(s):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'GET':
-        return Response(f'<h1>Welcome to Red Team\'s Bashtrap Reciving Endpoint</h1>\nBoy I hope we replace this with something more official, works tho.<br>Here\'s what blue team is up to.<br>\n{get_formatted_data()}<br><br>ᓚᘏᗢ', 200)
+        return Response(f"""<!DOCTYPE html>
+                        <html>
+                        <head>
+                        <style>
+                        table {{
+                        font-family: arial, sans-serif;
+                        border-collapse: collapse;
+                        width: 100%;
+                        }}
+
+                        td, th {{
+                        border: 1px solid #dddddd;
+                        text-align: left;
+                        padding: 8px;
+                        }}
+
+                        tr:nth-child(even) {{
+                        background-color: #dddddd;
+                        }}
+                        </style>
+                        </head>
+                        <body>
+                        <h1>Welcome to Red Team\'s Bashtrap Reciving Endpoint</h1>\n
+                        Boy I hope we replace this with something more official, works tho.<br>Here\'s what blue team is up to.<br>
+                        {get_formatted_data()}
+                        <br><br>ᓚᘏᗢ
+                        </body>
+                        </html>
+                        """, 200)
     elif request.method == 'POST':
         add_data(request.get_json(force=True))
         return Response('Post recieved at default endpoint, added to data', 200)
