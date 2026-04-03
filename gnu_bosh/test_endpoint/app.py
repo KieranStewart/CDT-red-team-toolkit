@@ -5,7 +5,7 @@ from flask import Flask, Response, request, jsonify
 app = Flask(__name__)
 
 import time
-save_path = "./"
+save_path = "./saved_data"
 filename = f"{save_path}data_save_{str(time.time())}.json"
 final_save = f"{save_path}sorted_data_save_{str(time.time())}.json"
 

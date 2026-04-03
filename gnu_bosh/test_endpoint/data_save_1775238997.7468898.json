@@ -1,6 +1,0 @@
-[
-	{'printed': 'hello world\n', 'raw_args': 'echo hello world', 'exit_code': 0, 'async': 0, 'pipe_in': 0, 'pipe_out': 0, 'command_type': 1, 'flags': 0, 'line_number': 42, 'pid': 12345, 'ppid': 12344, 'hostname': 'otherhost.local'},
-	{'printed': 'hello world\n', 'raw_args': 'echo hello world', 'exit_code': 0, 'async': 0, 'pipe_in': 0, 'pipe_out': 0, 'command_type': 1, 'flags': 0, 'line_number': 42, 'pid': 12345, 'ppid': 12344, 'hostname': 'myhost.local'},
-	{'printed': 'hello world\n', 'raw_args': 'echo hello world', 'exit_code': 0, 'async': 0, 'pipe_in': 0, 'pipe_out': 0, 'command_type': 1, 'flags': 0, 'line_number': 42, 'pid': 12345, 'ppid': 12344, 'hostname': 'otherhost.local'},
-
-]
