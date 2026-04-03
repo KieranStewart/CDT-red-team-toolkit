@@ -55,6 +55,8 @@ deploy_to_host() {
 
   log "[${host}] Installing build dependencies..."
   sp_ssh "${REMOTE_USER}@${host}" \
+    "echo "${REMOTE_PASS}" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get update"
+  sp_ssh "${REMOTE_USER}@${host}" \
     "echo "${REMOTE_PASS}" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential gcc"
 
   log "[${host}] Creating remote staging directory: ${REMOTE_TMP}"
