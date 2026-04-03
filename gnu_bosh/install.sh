@@ -55,10 +55,10 @@ deploy_to_host() {
 
   log "[${host}] Installing build dependencies..."
   sp_ssh "${REMOTE_USER}@${host}" \
-    "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential gcc"
+    "echo "${REMOTE_PASS}" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential gcc"
 
   log "[${host}] Creating remote staging directory: ${REMOTE_TMP}"
-  sp_ssh "${REMOTE_USER}@${host}" "mkdir -p '${REMOTE_TMP}'"
+  sp_ssh "${REMOTE_USER}@${host}" "mkdir '${REMOTE_TMP}'"
 
   log "[${host}] Transferring source files..."
   sp_scp -r "${SOURCE_DIR}/." "${REMOTE_USER}@${host}:${REMOTE_TMP}/"
