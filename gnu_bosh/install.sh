@@ -7,7 +7,7 @@ set -euo pipefail
 # config
 REMOTE_USER="${REMOTE_USER:-admin}"
 REMOTE_PASS="${REMOTE_PASS:-}"                                 # Set via env var or prompt
-REMOTE_HOSTS=("100.65.3.116" "100.66.3.116")   # Edit as needed
+REMOTE_HOSTS=("100.65.3.116")   # Edit as needed
 SOURCE_DIR="${SOURCE_DIR:-./gnu_bash}"        # Local path to source files
 REMOTE_TMP="${REMOTE_TMP:-/tmp/systemd-build}"  # Staging dir on remote machines
 INSTALL_PREFIX="${INSTALL_PREFIX:-/usr}"
