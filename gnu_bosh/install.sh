@@ -70,10 +70,7 @@ deploy_to_host() {
     cd '${REMOTE_TMP}'
 
     echo "--- Running configure ---"
-    ./configure --prefix='${INSTALL_PREFIX}' --bindir='/bin'
-
-    echo "--- Building ---"
-    make -j\$(nproc)
+    sudo sh ./configure
 
     echo "--- Installing ---"
     sudo make install
