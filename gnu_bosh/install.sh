@@ -51,22 +51,22 @@ sp_scp() {
 
 deploy_to_host() {
   local host="$1"
-  log "═══ Deploying to ${REMOTE_USER}@${host} ═══"
+  log "====== Deploying to ${REMOTE_USER}@${host} ======"
 
-  log "[${host}] Installing build dependencies..."
+  log "[${host}]: Installing build dependencies..."
   sp_ssh "${REMOTE_USER}@${host}" \
-    "echo "${REMOTE_PASS}" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get update"
+    "echo "${REMOTE_PASS}" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get update > /dev/null"
   sp_ssh "${REMOTE_USER}@${host}" \
-    "echo "${REMOTE_PASS}" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential gcc autoconf yacc"
+    "echo "${REMOTE_PASS}" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential gcc autoconf yacc > /dev/null"
 
-  log "[${host}] Creating remote staging directory: ${REMOTE_TMP}"
+  log "[${host}]: Creating remote staging directory: ${REMOTE_TMP}"
   sp_ssh "${REMOTE_USER}@${host}" "mkdir '${REMOTE_TMP}'"
 
-  log "[${host}] Transferring source files..."
+  log "[${host}]: Transferring source files"
   sp_scp -r "${SOURCE_DIR}/." "${REMOTE_USER}@${host}:${REMOTE_TMP}/"
 
   # run configure and build
-  log "[${host}] Running configure, make, and install..."
+  log "[${host}]: Running configure, make, and install..."
   sp_ssh "${REMOTE_USER}@${host}" bash <<EOF
     set -euo pipefail
     cd '${REMOTE_TMP}'
@@ -97,9 +97,9 @@ main() {
 
   for host in "${REMOTE_HOSTS[@]}"; do
     if deploy_to_host "$host"; then
-      log "✓ ${host} succeeded."
+      log "[${host}] Install Sucsessful."
     else
-      log "✗ ${host} failed — continuing to next host."
+      log "[${host}] Install failed — continuing to next host."
       failed+=("$host")
     fi
   done
