@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, Response, request, jsonify
 
 app = Flask(__name__)
@@ -45,38 +47,44 @@ def add_data(s):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'GET':
-        return Response(f"""<!DOCTYPE html>
-                        <html>
-                        <head>
-                        <style>
-                        table {{
-                        font-family: arial, sans-serif;
-                        border-collapse: collapse;
-                        width: 100%;
-                        }}
-
-                        td, th {{
-                        border: 1px solid #dddddd;
-                        text-align: left;
-                        padding: 8px;
-                        }}
-
-                        tr:nth-child(even) {{
-                        background-color: #dddddd;
-                        }}
-                        </style>
-                        </head>
-                        <body>
-                        <h1>Welcome to Red Team\'s Bashtrap Reciving Endpoint</h1>\n
-                        Boy I hope we replace this with something more official, works tho.<br>Here\'s what blue team is up to.<br>
-                        {get_formatted_data()}
-                        <br><br>ᓚᘏᗢ
-                        </body>
-                        </html>
-                        """, 200)
+        return Response(jsonify(data), 200)
     elif request.method == 'POST':
         add_data(request.get_json(force=True))
         return Response('Post recieved at default endpoint, added to data', 200)
+@app.route('/view', methods=['GET'])
+def get_view():
+    return Response(f"""<!DOCTYPE html>\n
+        <html>\n
+        <head>\n
+        <style>\n
+        * {{\n
+        font-family: 'Courier New', monospace;\n
+        }}\n
+        table {{\n
+        font-family: arial, sans-serif;\n
+        border-collapse: collapse;\n
+        width: 100%;\n
+        }}\n
+\n
+        td, th {{\n
+        border: 1px solid #dddddd;\n
+        text-align: left;\n
+        padding: 8px;\n
+        }}\n
+\n
+        tr:nth-child(even) {{\n
+        background-color: #dddddd;\n
+        }}\n
+        </style>\n
+        </head>\n
+        <body>\n
+        <h1>Welcome to Red Team\'s Bashtrap Reciving Endpoint</h1>\n
+        <br>Here\'s what blue team is up to.<br>\n
+        {get_formatted_data()}\n
+        <br><br>ᓚᘏᗢ\n
+        </body>\n
+        </html>\n
+        """, 200)
 
 
 if __name__ == "__main__":
@@ -85,3 +93,5 @@ if __name__ == "__main__":
     app.run(port=8080, host="0.0.0.0")
     with open(filename, "a") as save:
         save.write("\n]")
+    with open(f"sorted_data_save_{str(time.time())}.json", "w") as final_save:
+        final_save.write(str(json.dumps(data)))
