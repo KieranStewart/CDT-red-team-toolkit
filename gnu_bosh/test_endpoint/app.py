@@ -5,29 +5,36 @@ app = Flask(__name__)
 import time
 filename = f"data_save_{str(time.time())}.json"
 
-data = []
+data = {}
 
 def get_formatted_data():
     global data
-    if len(data) != 0:
-        out = "<table>\n<tr>\n"
-        for key in data[0].keys():
-            out += f"\t<th>{key}</th>\n"
-        out += "</tr>\n"
-        for json in data:
-            out += "<tr>\n"
-            for key in json.keys():
-                out += f"\t<td>{json[key]}</td>\n"
+    if len(data.keys()) == 0:
+        return "No Hosts"
+    for host in data.keys():
+        if len(data[host]) != 0:
+            out = "<table>\n<tr>\n"
+            for key in data[host][0].keys():
+                out += f"\t<th>{key}</th>\n"
             out += "</tr>\n"
-        out += "</table>\n"
-        return out
-    else:
-        return "No Data"
+            for json in data[host]:
+                out += "<tr>\n"
+                for key in json.keys():
+                    out += f"\t<td>{json[key]}</td>\n"
+                out += "</tr>\n"
+            out += "</table>\n"
+            return out
+        else:
+            return "No Data"
             
 
 def add_data(s):
     global data
-    data.append(s)
+    if "hostname" in s.keys():
+        src_hostname = s["hostname"]
+        if not src_hostname in data.keys():
+            data.keys[src_hostname] = []
+        data[src_hostname].append(s)
     with open(filename, "a") as save:
         save.write(f"\t{str(s)},\n")
 
