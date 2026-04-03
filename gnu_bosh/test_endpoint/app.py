@@ -13,7 +13,7 @@ def get_formatted_data():
         return "No Hosts"
     super_out = ""
     for host in data.keys():
-        super_out += f"<br><h3>Host:{{host}}</h3>"
+        super_out += f"<br><h3>Host:{host}</h3>"
         if len(data[host]) != 0:
             out = "<table>\n<tr>\n"
             for key in data[host][0].keys():
