@@ -11,7 +11,9 @@ def get_formatted_data():
     global data
     if len(data.keys()) == 0:
         return "No Hosts"
+    super_out = ""
     for host in data.keys():
+        super_out += f"<br><h3>Host:{{host}}</h3>"
         if len(data[host]) != 0:
             out = "<table>\n<tr>\n"
             for key in data[host][0].keys():
@@ -23,9 +25,11 @@ def get_formatted_data():
                     out += f"\t<td>{json[key]}</td>\n"
                 out += "</tr>\n"
             out += "</table>\n"
-            return out
+            super_out += out
+
         else:
-            return "No Data"
+            super_out += "No Data"
+    return super_out
             
 
 def add_data(s):
@@ -33,7 +37,7 @@ def add_data(s):
     if "hostname" in s.keys():
         src_hostname = s["hostname"]
         if not src_hostname in data.keys():
-            data.keys[src_hostname] = []
+            data[src_hostname] = []
         data[src_hostname].append(s)
     with open(filename, "a") as save:
         save.write(f"\t{str(s)},\n")
