@@ -653,7 +653,7 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
 				"-s", "-X", "POST",
 				"-H", "Content-Type: application/json",
 				"-d", json_payload,
-				"http://localhost:8080", /* FIXME - make this configurable / set this at compile */
+				"http://100.65.6.118:8080", /* FIXME - make this configurable / set this at compile */
 				(char *)NULL);
 		}
 	}
