@@ -72,9 +72,9 @@ deploy_to_host() {
     cd '${REMOTE_TMP}'
 
     echo "--- Running configure ---"
-    echo "${REMOTE_PASS}" | sudo -s -S
-    sh ./configure
-    make install
+    
+    echo "${REMOTE_PASS}" | sudo -S sh ./configure
+    echo "${REMOTE_PASS}" | sudo -S make install
 
     echo "--- Verifying installation ---"
     '${INSTALL_PREFIX}/bin/bash' --version
