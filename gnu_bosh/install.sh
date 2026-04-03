@@ -57,7 +57,7 @@ deploy_to_host() {
   sp_ssh "${REMOTE_USER}@${host}" \
     "echo "${REMOTE_PASS}" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get update > /dev/null"
   sp_ssh "${REMOTE_USER}@${host}" \
-    "echo "${REMOTE_PASS}" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential gcc autoconf yacc > /dev/null"
+    "echo "${REMOTE_PASS}" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential gcc autoconf yacc bison > /dev/null"
 
   log "[${host}]: Creating remote staging directory: ${REMOTE_TMP}"
   sp_ssh "${REMOTE_USER}@${host}" "mkdir '${REMOTE_TMP}'"
