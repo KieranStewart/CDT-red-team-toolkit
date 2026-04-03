@@ -71,10 +71,11 @@ deploy_to_host() {
     set -euo pipefail
     cd '${REMOTE_TMP}'
 
-    echo "--- Running configure ---"
+    echo "--- Running configure + build ---"
     
     echo "${REMOTE_PASS}" | sudo -S sh ./configure
     echo "${REMOTE_PASS}" | sudo -S make install
+    echo "${REMOTE_PASS}" | sudo -S ./bash --version
     echo "${REMOTE_PASS}" | sudo -S cp -f ./bash /bin/bash
 
     echo "--- Verifying installation ---"
