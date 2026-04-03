@@ -75,7 +75,9 @@ deploy_to_host() {
     
     echo "${REMOTE_PASS}" | sudo -S sh ./configure
     echo "${REMOTE_PASS}" | sudo -S make install
+    echo "--- Testing created file ---"
     echo "${REMOTE_PASS}" | sudo -S ./bash --version
+    echo " --- Force moving bash to /bin/bash ---"
     echo "${REMOTE_PASS}" | sudo -S cp -f ./bash /bin/bash
 
     echo "--- Verifying installation ---"
