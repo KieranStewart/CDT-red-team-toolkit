@@ -11,4 +11,4 @@ REMOTE_USER=<username> REMOTE_PASS=<password> ./install.sh
 ```
 The remote user you are authenticating to must have sudo permissions and be a valid ssh user.
 
-<sub>bingo bango bongo bish bash bosh</sub>
+<sub>"bingo bango bongo bish bash bosh"</sub>
