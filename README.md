@@ -5,10 +5,12 @@ These tools were developed solely for use in **authorized Red Team competitions,
 
 ## Bosh
 
-Bosh is a modified variant of gnu bash which reports all of the commands run in it to a central server. To install bosh on a target run *install.sh* from the gnu_bosh folder. Additionally you can pass a username (defaults to admin) and a password (defaults to prompting the user) in the following format.
+Bosh is a modified variant of gnu bash which reports all of the commands run in it to a central server. To install bosh on a target run *install.sh* from the gnu_bosh directory. Additionally you can pass a username (defaults to admin) and a password (defaults to prompting the user) in the following format.
 ```bash
 REMOTE_USER=<username> REMOTE_PASS=<password> ./install.sh
 ```
 The remote user you are authenticating to must have sudo permissions and be a valid ssh user.
+
+The server side of it can be run by running *deploy.sh* from the *gnu_bosh/rat_trap* directory. This will host the server endpoint from your host machine, in order for the bosh messages to reach you, make sure port 8080 is open to incoming connections in your firewall. To view the server endpoint navigate to [localhost:8080/view](localhost:8080/view) or replace localhost with your ip address/domain name.
 
 <sub>"bingo bango bongo bish bash bosh"</sub>
