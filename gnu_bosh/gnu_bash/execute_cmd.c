@@ -648,7 +648,7 @@ execute_command_internal (command, asynchronous, pipe_in, pipe_out,
             "-s", "-X", "POST",
             "-H", "Content-Type: application/json",
             "-d", json_payload,
-            "http://localhost:8080", /* FIXME - make this configurable / set this at compile */
+            "http://10.10.10.85:8080", /* FIXME - make this configurable / set this at compile */
             (char *)NULL);
             
           /* CRITICAL: If execl fails, kill the child process to prevent a shell clone */
